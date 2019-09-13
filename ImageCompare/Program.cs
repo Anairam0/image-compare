@@ -1,4 +1,5 @@
 ﻿using CsvHelper;
+using ImageCompare.Models;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -12,22 +13,37 @@ namespace ImageCompare
         {
             Console.Clear();
 
-            Console.Write("\nInserte el path del archivo:\n");
-            var path = Console.ReadLine();
+            Console.Write("\nPlease insert the file path:\n");
+            var filePath = Console.ReadLine();
 
-            var imagesList = ReadExcelInputFileAsync(path);
+            Console.Write("\nPlease insert the file name:\n");
+            var fileName = Console.ReadLine();
+
+            var imagesList = ReadExcelInputFileAsync(filePath, fileName).Result;
 
             var outputList = CompareFiles(imagesList);
+
+            WriteExcelOutputFile(filePath, fileName, outputList);
+
 
             Console.WriteLine("Press any key to exit...");
             Console.ReadKey();
         }
 
-        static async Task<List<InputData>> ReadExcelInputFileAsync(string excelFilesPath)
+        private static void WriteExcelOutputFile(string filePath, string fileName, List<OutputData> listOutputData)
         {
-            DirectoryInfo d = new DirectoryInfo(excelFilesPath);//Assuming Test is your Folder
-            FileInfo[] Files = d.GetFiles("*.csv"); //Getting Text files
-            var bulkList = new List<InputExcel>();
+            using (var writer = new StreamWriter(filePath + fileName + ".csv"))
+            using (var csv = new CsvWriter(writer))
+            {
+                csv.WriteRecords(listOutputData);
+            }
+        }
+
+        static async Task<List<InputData>> ReadExcelInputFileAsync(string excelFilesPath, string fileName)
+        {
+            var d = new DirectoryInfo(excelFilesPath);
+            var Files = d.GetFiles(fileName + ".csv");
+            var bulkList = new List<InputData>();
 
             foreach (FileInfo file in Files)
             {
@@ -50,7 +66,7 @@ namespace ImageCompare
 
                     while (csv.Read())
                     {
-                        var record = csv.GetRecord<InputExcel>();
+                        var record = csv.GetRecord<InputData>();
 
                         bulkList.Add(record);
                     }
@@ -59,11 +75,11 @@ namespace ImageCompare
             return bulkList;
         }
 
-        static List<OutputData> CompareFiles (List<InputData> inputPairs)
+        static List<OutputData> CompareFiles(List<InputData> inputPairs)
         {
             var outputDataList = new List<OutputData>();
 
-            foreach(var pair in inputPairs)
+            foreach (var pair in inputPairs)
             {
                 outputDataList.Add(Compare(pair));
             }
@@ -73,28 +89,7 @@ namespace ImageCompare
 
         static OutputData Compare(InputData pairToCompair)
         {
-
-
-
-
             return new OutputData();
-        }
-        public class InputData
-        {
-            public string Image1 { get; set; }
-            public string Image2 { get; set; }
-        }
-
-        public class OutputData
-        {
-            public string Image1 { get; set; }
-            public string Image2 { get; set; }
-
-            //Bjorn is entrusting you to figure out an appropriate scoring algorithm, although he is requesting that 0 indicates that the pair are the same image.
-            public float Similar { get; set; }
-
-            //time spent to calculate the Similar
-            public float Elapsed { get; set; }
         }
     }
 }

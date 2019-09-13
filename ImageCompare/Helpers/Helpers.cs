@@ -15,7 +15,7 @@ namespace Common
     {
         public void WriteExcelOutputFile(string filePath, string fileName, List<OutputData> listOutputData)
         {
-            using (var writer = new StreamWriter(filePath + fileName + ".csv"))
+            using (var writer = new StreamWriter(filePath + fileName + "_result.csv"))
             using (var csv = new CsvWriter(writer))
             {
                 csv.WriteRecords(listOutputData);
@@ -24,11 +24,22 @@ namespace Common
 
         public async Task<List<InputData>> ReadExcelInputFileAsync(string excelFilesPath, string fileName)
         {
-            var d = new DirectoryInfo(excelFilesPath);
-            var Files = d.GetFiles(fileName + ".csv");
             var bulkList = new List<InputData>();
+            DirectoryInfo dir;
+            FileInfo[] files;
 
-            foreach (FileInfo file in Files)
+            try
+            {
+                dir = new DirectoryInfo(excelFilesPath);
+                files = dir.GetFiles(fileName + ".csv");
+            } catch
+            {
+                Console.WriteLine("Error Reading the file");
+                return bulkList;
+            }
+            
+
+            foreach (FileInfo file in files)
             {
                 var str = excelFilesPath + "\\" + file.Name;
 
@@ -73,9 +84,28 @@ namespace Common
         public OutputData Compare(InputData pairToCompair)
         {
             long initTicks = DateTime.Now.Ticks;
+            Bitmap bmpMin1;
+            Bitmap bmpMin2;
 
-            List<bool> brHash1 = GetBrightHash(pairToCompair.Image1);
-            List<bool> brHash2 = GetBrightHash(pairToCompair.Image2);
+            try
+            {
+                bmpMin1 = new Bitmap(new Bitmap(pairToCompair.Image1), new Size(32, 32));
+                bmpMin2 = new Bitmap(new Bitmap(pairToCompair.Image2), new Size(32, 32));
+            } catch (Exception e)
+            {
+                Console.WriteLine("Error reading Image File, more information about the error: ", e.Message);
+                return new OutputData()
+                {
+                    Image1 = pairToCompair.Image1,
+                    Image2 = pairToCompair.Image2,
+                    Similar = 1,
+                    Elapsed = 0
+                };
+            }
+            
+
+            List<bool> brHash1 = GetBrightHash(bmpMin1);
+            List<bool> brHash2 = GetBrightHash(bmpMin2);
 
             int unequalElements = brHash1.Zip(brHash2, (i, j) => i != j).Count(eq => eq);
 
@@ -92,10 +122,10 @@ namespace Common
             };
         }
 
-        private List<bool> GetBrightHash(string filePath)
+        private List<bool> GetBrightHash(Bitmap bmpMin)
         {
 
-            Bitmap bmpMin = new Bitmap(new Bitmap(filePath), new Size(32, 32));
+            
 
             var data = bmpMin.LockBits(
                 new Rectangle(Point.Empty, bmpMin.Size),

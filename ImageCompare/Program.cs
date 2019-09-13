@@ -19,10 +19,12 @@ namespace ImageCompare
 
             var imagesList = commonHelper.ReadExcelInputFileAsync(filePath, fileName).Result;
 
-            var outputList = commonHelper.CompareFiles(imagesList);
+            if(imagesList.Count > 0)
+            {
+                var outputList = commonHelper.CompareFiles(imagesList);
 
-            commonHelper.WriteExcelOutputFile(filePath, fileName, outputList);
-
+                commonHelper.WriteExcelOutputFile(filePath, fileName, outputList);
+            }
             Console.WriteLine("Press any key to exit...");
             Console.ReadKey();
         }

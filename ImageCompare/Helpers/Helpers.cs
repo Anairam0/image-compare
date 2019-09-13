@@ -15,10 +15,12 @@ namespace Common
     {
         public void WriteExcelOutputFile(string filePath, string fileName, List<OutputData> listOutputData)
         {
-            using (var writer = new StreamWriter(filePath + fileName + "_result.csv"))
+            using (var writer = new StreamWriter(filePath +  '\\' + fileName + "_result.csv"))
             using (var csv = new CsvWriter(writer))
             {
                 csv.WriteRecords(listOutputData);
+
+                writer.Flush();
             }
         }
 
